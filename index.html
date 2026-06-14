@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unrealities 影想 · AI 動畫工作室</title>
+<meta name="description" content="從角色設計、分鏡到成片，用 AI 動畫流程把你的想像變成會動的故事。">
+<meta name="theme-color" content="#0a0a0f">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Unrealities 影想 · AI 動畫工作室">
+<meta property="og:description" content="從角色設計、分鏡到成片，用 AI 動畫流程把你的想像變成會動的故事。">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='32' y2='32'%3E%3Cstop stop-color='%23ff7eb6'/%3E%3Cstop offset='.5' stop-color='%23b76bff'/%3E%3Cstop offset='1' stop-color='%236b9bff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M16 2L29 9V23L16 30L3 23V9Z' fill='%230a0a0f' stroke='url(%23g)' stroke-width='2'/%3E%3Cpath d='M11.5 11L20.5 16L11.5 21Z' fill='url(%23g)'/%3E%3C/svg%3E">
+
+<!-- 中文友善字型：拉丁字用 Manrope，中文字用 Noto Sans TC；沒網路時退回系統內建中文字（蘋方 / 微軟正黑） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0a0a0f;
+    --ink:#f5f5fa;
+    --muted:#a7a7bd;
+    --line:rgba(255,255,255,.055);
+    --g1:#ff7eb6;   /* 粉 */
+    --g2:#b76bff;   /* 紫 */
+    --g3:#6b9bff;   /* 藍 */
+    --card:rgba(255,255,255,.045);
+    --stroke:rgba(255,255,255,.10);
+    --font: "Manrope","Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",-apple-system,sans-serif;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:var(--font);
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+    letter-spacing:.01em;
+  }
+
+  /* ---------- 格線背景 + 放射狀暈影遮罩（影片步驟 3） ---------- */
+  .grid-bg{
+    position:fixed; inset:-2px; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size:62px 62px;
+    -webkit-mask:radial-gradient(ellipse 72% 64% at 50% 30%, #000 26%, transparent 70%);
+            mask:radial-gradient(ellipse 72% 64% at 50% 30%, #000 26%, transparent 70%);
+    opacity:0; transform:scale(.97);
+    animation:gridIn 1.4s cubic-bezier(.2,.7,.2,1) .1s forwards;
+  }
+  @keyframes gridIn{to{opacity:1;transform:scale(1)}}
+
+  /* ---------- 導覽列 ---------- */
+  nav{
+    position:fixed; top:0; left:0; right:0; z-index:40;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px clamp(20px,5vw,64px);
+    background:linear-gradient(180deg, rgba(10,10,15,.85), transparent);
+    backdrop-filter:blur(4px);
+  }
+  .logo{display:flex; align-items:center; gap:11px; font-weight:800; font-size:19px; letter-spacing:.02em; cursor:pointer}
+  .logo svg{width:30px;height:30px;display:block}
+  .logo .zh{color:var(--muted); font-weight:500; font-size:14px; letter-spacing:.12em}
+
+  .nav-links{display:flex; align-items:center; gap:34px}
+  .nav-links a{
+    color:var(--muted); text-decoration:none; font-size:15px; font-weight:500;
+    transition:color .2s;
+  }
+  .nav-links a:hover{color:var(--ink)}
+  .btn-login{
+    color:var(--ink); border:1px solid var(--stroke); background:var(--card);
+    padding:9px 20px; border-radius:999px; font-size:14px; font-weight:700;
+    cursor:pointer; transition:.2s; backdrop-filter:blur(6px);
+  }
+  .btn-login:hover{border-color:rgba(255,255,255,.3); transform:translateY(-1px)}
+
+  .burger{display:none; flex-direction:column; gap:5px; background:none; border:0; cursor:pointer; padding:8px}
+  .burger span{width:24px; height:2px; background:var(--ink); border-radius:2px; transition:.25s}
+
+  /* ---------- 主視覺 ---------- */
+  .hero{
+    position:relative; z-index:10;
+    min-height:100svh; display:grid; place-items:center;
+    text-align:center; padding:120px clamp(20px,5vw,40px) 80px;
+    overflow:hidden;
+  }
+  .aura{
+    position:absolute; z-index:0; pointer-events:none;
+    width:min(90vw,1100px); height:min(90vw,1100px);
+    left:50%; top:40%; transform:translate(-50%,-50%);
+    background:
+      radial-gradient(closest-side, rgba(183,107,255,.16), transparent 70%),
+      radial-gradient(closest-side, rgba(107,155,255,.12), transparent 70%);
+    filter:blur(8px);
+  }
+  .hero-inner{max-width:880px; position:relative; z-index:12}
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:9px;
+    border:1px solid var(--stroke); background:var(--card);
+    padding:7px 16px; border-radius:999px;
+    font-size:13.5px; color:var(--muted); font-weight:500; letter-spacing:.04em;
+    backdrop-filter:blur(6px);
+    opacity:0; animation:fadeUp .8s ease .15s forwards;
+  }
+  .eyebrow .dot{width:7px;height:7px;border-radius:50%;
+    background:linear-gradient(120deg,var(--g1),var(--g3));
+    box-shadow:0 0 12px var(--g2)}
+
+  h1{
+    font-size:clamp(40px,7.2vw,82px); line-height:1.18; font-weight:900;
+    letter-spacing:.005em; margin:26px 0 22px;
+  }
+  h1 .line{display:block}
+  .word{
+    display:inline-block; opacity:0;
+    transform:translateY(.5em); filter:blur(8px);
+    animation:wordIn .8s cubic-bezier(.2,.75,.2,1) forwards;
+    animation-delay:calc(var(--i) * .13s + .45s);
+  }
+  .grad{
+    background:linear-gradient(100deg,var(--g1) 0%,var(--g2) 48%,var(--g3) 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  @keyframes wordIn{to{opacity:1;transform:none;filter:blur(0)}}
+
+  .sub{
+    font-size:clamp(16px,2.1vw,19px); line-height:1.85; color:var(--muted);
+    max-width:600px; margin:0 auto 36px;
+    opacity:0; animation:fadeUp .9s ease 1.25s forwards;
+  }
+  .cta{
+    display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
+    opacity:0; animation:fadeUp .9s ease 1.45s forwards;
+  }
+  .btn{
+    font-family:var(--font); font-size:16px; font-weight:700; cursor:pointer;
+    padding:15px 30px; border-radius:999px; border:0; transition:.22s;
+    display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  }
+  .btn-primary{
+    color:#15101c;
+    background:linear-gradient(100deg,var(--g1),var(--g2) 55%,var(--g3));
+    box-shadow:0 10px 36px -10px rgba(183,107,255,.7);
+  }
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 16px 44px -10px rgba(183,107,255,.85)}
+  .btn-ghost{color:var(--ink); background:var(--card); border:1px solid var(--stroke)}
+  .btn-ghost:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3)}
+
+  .trust{
+    margin-top:42px; font-size:13.5px; color:#7c7c93; letter-spacing:.03em;
+    opacity:0; animation:fadeUp .9s ease 1.65s forwards;
+  }
+  .trust b{color:var(--muted); font-weight:700}
+
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+  /* ---------- 會動的角色（影片步驟 5–8） ---------- */
+  .char{
+    position:absolute; z-index:8; width:clamp(140px,15vw,220px);
+    bottom:5vh; pointer-events:none;
+  }
+  .char.left{left:clamp(10px,4vw,70px); animation:floatA 6s ease-in-out infinite}
+  .char.right{right:clamp(10px,4vw,70px); animation:floatB 6.6s ease-in-out infinite}
+  /* 角色身後的柔光（純裝飾，營造氛圍） */
+  .char .spotlight{
+    position:absolute; inset:-18%; z-index:-1; border-radius:50%;
+    background:radial-gradient(closest-side, rgba(183,107,255,.20), rgba(107,155,255,.10) 60%, transparent 78%);
+    filter:blur(14px);
+  }
+  .char-media{width:100%; display:block; opacity:0; animation:charIn 1s ease 1.1s forwards}
+  /* 真實影片：框成圓角人像卡（白底變成乾淨的卡片，深色背景上很有設計感） */
+  .char video.char-media{
+    border-radius:22px; object-fit:cover; aspect-ratio:4/5;
+    border:1px solid rgba(255,255,255,.14);
+    box-shadow:0 22px 55px -14px rgba(0,0,0,.7);
+    -webkit-mask:radial-gradient(120% 120% at 50% 42%, #000 72%, transparent 100%);
+            mask:radial-gradient(120% 120% at 50% 42%, #000 72%, transparent 100%);
+  }
+
+  @keyframes charIn{to{opacity:1}}
+  @keyframes floatA{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(1deg)}}
+  @keyframes floatB{0%,100%{transform:translateY(0) rotate(1deg)}50%{transform:translateY(-16px) rotate(-1deg)}}
+
+  .blink{animation:blink 4.2s infinite}
+  .right .blink{animation-delay:1.8s}
+  @keyframes blink{0%,94%,100%{transform:scaleY(1)}96%,98%{transform:scaleY(.1)}}
+
+  /* ---------- 內容區塊 ---------- */
+  .section{position:relative; z-index:10; max-width:1180px; margin:0 auto; padding:96px clamp(20px,5vw,40px)}
+  .sec-head{text-align:center; max-width:620px; margin:0 auto 52px}
+  .sec-head .tag{font-size:14px; font-weight:700; letter-spacing:.1em; color:var(--g2)}
+  .sec-head h2{font-size:clamp(28px,4.4vw,44px); font-weight:900; margin:10px 0 14px}
+  .sec-head p{color:var(--muted); font-size:16px; line-height:1.85}
+
+  /* 作品 */
+  .works{display:grid; grid-template-columns:repeat(3,1fr); gap:22px}
+  .work{border:1px solid var(--stroke); border-radius:20px; overflow:hidden; background:var(--card); transition:.28s; cursor:pointer}
+  .work:hover{transform:translateY(-5px); border-color:rgba(255,255,255,.28)}
+  .work .thumb{aspect-ratio:16/10; display:grid; place-items:center; font-size:44px; position:relative; overflow:hidden}
+  .work .thumb::after{content:""; position:absolute; inset:0; background:linear-gradient(135deg,rgba(0,0,0,.1),rgba(0,0,0,.35))}
+  .work .meta{padding:18px 20px}
+  .work .meta h3{font-size:17px; font-weight:700}
+  .work .meta span{display:inline-block; margin-top:8px; font-size:12.5px; color:var(--muted); border:1px solid var(--stroke); padding:3px 11px; border-radius:999px}
+
+  /* 服務 */
+  .services{display:grid; grid-template-columns:repeat(4,1fr); gap:18px}
+  .svc{border:1px solid var(--stroke); background:var(--card); border-radius:20px; padding:28px 24px; transition:.25s}
+  .svc:hover{transform:translateY(-4px); border-color:rgba(255,255,255,.24)}
+  .svc .ic{width:46px; height:46px; border-radius:13px; display:grid; place-items:center; font-size:22px;
+    background:linear-gradient(135deg,rgba(255,126,182,.22),rgba(107,155,255,.22)); border:1px solid var(--stroke); margin-bottom:18px}
+  .svc h3{font-size:17px; font-weight:700; margin-bottom:9px}
+  .svc p{color:var(--muted); font-size:14.5px; line-height:1.75}
+
+  /* 流程 */
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:22px}
+  .step{position:relative; padding-top:8px}
+  .step .num{font-size:40px; font-weight:900; line-height:1;
+    background:linear-gradient(120deg,var(--g1),var(--g3)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .step h3{font-size:17px; font-weight:700; margin:14px 0 8px}
+  .step p{color:var(--muted); font-size:14.5px; line-height:1.75}
+
+  /* 關於 */
+  .about{text-align:center; max-width:740px; margin:0 auto}
+  .about p{color:var(--muted); font-size:clamp(16px,2vw,18px); line-height:2}
+  .stats{display:flex; gap:48px; justify-content:center; margin-top:44px; flex-wrap:wrap}
+  .stat b{display:block; font-size:38px; font-weight:900;
+    background:linear-gradient(120deg,var(--g1),var(--g3)); -webkit-background-clip:text; background-clip:text; color:transparent}
+  .stat span{color:var(--muted); font-size:14px}
+
+  /* 滑入動畫（漸進增強：沒有 JS 時內容預設就看得到，動畫只是加分） */
+  .reveal{transition:opacity .7s ease, transform .7s cubic-bezier(.2,.7,.2,1)}
+  .js .reveal{opacity:0; transform:translateY(26px)}
+  .js .reveal.in{opacity:1; transform:none}
+
+  /* CTA 區 */
+  .cta-band{text-align:center; padding:80px clamp(20px,5vw,40px)}
+  .cta-band h2{font-size:clamp(26px,4vw,40px); font-weight:900; margin-bottom:26px}
+
+  /* 頁尾 */
+  footer{border-top:1px solid var(--line); text-align:center; padding:38px 20px; color:#6f6f86; font-size:14px; position:relative; z-index:10}
+  footer .logo{display:inline-flex; justify-content:center; margin-bottom:14px}
+
+  /* ---------- 手機全螢幕選單 ---------- */
+  .mobile-nav{
+    position:fixed; inset:0; z-index:70; background:rgba(10,10,15,.97);
+    backdrop-filter:blur(14px); display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:30px;
+    opacity:0; pointer-events:none; transition:opacity .28s;
+  }
+  .mobile-nav.open{opacity:1; pointer-events:auto}
+  .mobile-nav a{color:var(--ink); text-decoration:none; font-size:24px; font-weight:700}
+  .mobile-nav .btn-login{font-size:18px; padding:14px 34px; margin-top:8px}
+  .close-x{position:absolute; top:24px; right:26px; background:none; border:0; cursor:pointer; padding:8px; width:42px; height:42px}
+  .close-x::before,.close-x::after{
+    content:""; position:absolute; width:26px; height:2px; background:var(--ink);
+    top:50%; left:50%; border-radius:2px;
+  }
+  .close-x::before{transform:translate(-50%,-50%) rotate(45deg)}
+  .close-x::after{transform:translate(-50%,-50%) rotate(-45deg)}
+
+  /* ---------- 登入視窗 ---------- */
+  .modal{position:fixed; inset:0; z-index:90; display:grid; place-items:center;
+    background:rgba(5,5,9,.62); backdrop-filter:blur(8px);
+    opacity:0; pointer-events:none; transition:opacity .25s; padding:20px}
+  .modal.open{opacity:1; pointer-events:auto}
+  .modal-card{width:min(94vw,400px); background:#14141c; border:1px solid var(--stroke);
+    border-radius:24px; padding:38px 34px 34px; position:relative;
+    transform:translateY(14px) scale(.98); transition:transform .25s}
+  .modal.open .modal-card{transform:none}
+  .modal-card h3{font-size:24px; font-weight:900; text-align:center}
+  .modal-card .lead{text-align:center; color:var(--muted); font-size:14px; margin:8px 0 26px}
+  .field{margin-bottom:14px}
+  .field label{display:block; font-size:13px; color:var(--muted); margin-bottom:7px}
+  .field input{width:100%; background:rgba(255,255,255,.04); border:1px solid var(--stroke);
+    border-radius:12px; padding:13px 15px; color:var(--ink); font-family:var(--font); font-size:15px; transition:.2s}
+  .field input:focus{outline:none; border-color:var(--g2); background:rgba(255,255,255,.07)}
+  .modal-card .btn-primary{width:100%; justify-content:center; margin-top:8px}
+  .modal-card .alt{text-align:center; font-size:13.5px; color:var(--muted); margin-top:18px}
+  .modal-card .alt a{color:var(--g3); text-decoration:none; font-weight:700}
+  .modal-card .note{text-align:center; font-size:12px; color:#6f6f86; margin-top:14px; min-height:16px}
+  .modal-card .close-x{top:16px; right:16px}
+
+  /* ---------- 聯絡我們 ---------- */
+  .contact-grid{display:grid; grid-template-columns:1fr 1fr; gap:46px; align-items:start; max-width:1000px; margin:0 auto}
+  .contact-info .tag{font-size:14px; font-weight:700; letter-spacing:.1em; color:var(--g2)}
+  .contact-info h2{font-size:clamp(26px,3.6vw,38px); font-weight:900; line-height:1.32; margin:10px 0 18px}
+  .contact-info p{color:var(--muted); line-height:1.9; margin-bottom:24px}
+  .contact-info .hint{font-size:12.5px; color:#6f6f86; margin-top:18px; margin-bottom:0}
+  .contact-list{list-style:none; display:grid; gap:13px}
+  .contact-list li{font-size:15.5px; color:var(--ink)}
+  .contact-form{background:var(--card); border:1px solid var(--stroke); border-radius:22px; padding:30px}
+  .contact-form .btn-primary{width:100%; justify-content:center; margin-top:6px}
+  .field textarea{
+    width:100%; background:rgba(255,255,255,.04); border:1px solid var(--stroke);
+    border-radius:12px; padding:13px 15px; color:var(--ink); font-family:var(--font);
+    font-size:15px; transition:.2s; resize:vertical; min-height:96px; line-height:1.6}
+  .field textarea:focus{outline:none; border-color:var(--g2); background:rgba(255,255,255,.07)}
+
+  /* ---------- 作品詳情視窗 ---------- */
+  .work-modal{width:min(94vw,460px); text-align:left}
+  .work-modal-thumb{aspect-ratio:16/9; border-radius:16px; display:grid; place-items:center; font-size:62px; margin-bottom:18px}
+  .work-modal-tag{font-size:12.5px; color:var(--muted); border:1px solid var(--stroke); padding:3px 12px; border-radius:999px}
+  #workTitle{font-size:23px; font-weight:900; margin:13px 0 11px; text-align:left}
+  .work-modal-desc{color:var(--muted); line-height:1.9; font-size:15px; margin-bottom:24px}
+  .work-modal .btn-primary{width:100%; justify-content:center}
+
+  /* ---------- 響應式（影片步驟 11） ---------- */
+  @media (max-width:880px){
+    .works,.services,.steps{grid-template-columns:repeat(2,1fr)}
+    .contact-grid{grid-template-columns:1fr; gap:32px}
+  }
+  @media (max-width:780px){
+    .nav-links{display:none}
+    nav>.btn-login{display:none}
+    .burger{display:flex}
+    .char{display:none}          /* 手機隱藏角色 */
+    h1{font-size:clamp(34px,9vw,52px)}
+    .cta{flex-direction:column; width:100%; max-width:340px; margin-inline:auto}
+    .hero .btn{width:100%; justify-content:center}
+    .stats{gap:30px}
+  }
+  @media (max-width:520px){
+    .works,.services,.steps{grid-template-columns:1fr}
+  }
+
+  /* 尊重「減少動態」偏好（無障礙友善） */
+  @media (prefers-reduced-motion:reduce){
+    *,::before,::after{animation:none!important; transition:none!important}
+    .word,.eyebrow,.sub,.cta,.trust,.char-media,.reveal{opacity:1!important; transform:none!important; filter:none!important}
+    .grid-bg{opacity:1;transform:none}
+  }
+</style>
+</head>
+<body>
+
+  <div class="grid-bg"></div>
+
+  <!-- 導覽列 -->
+  <nav>
+    <div class="logo" data-scroll="#top">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="32" y2="32">
+          <stop stop-color="#ff7eb6"/><stop offset="0.5" stop-color="#b76bff"/><stop offset="1" stop-color="#6b9bff"/>
+        </linearGradient></defs>
+        <path d="M16 2 L29 9 V23 L16 30 L3 23 V9 Z" stroke="url(#lg)" stroke-width="2" fill="rgba(183,107,255,.10)"/>
+        <path d="M11.5 11 L20.5 16 L11.5 21 Z" fill="url(#lg)"/>
+      </svg>
+      <span>Unrealities <span class="zh">影想</span></span>
+    </div>
+    <div class="nav-links">
+      <a href="#works">作品</a>
+      <a href="#services">服務</a>
+      <a href="#process">製作流程</a>
+      <a href="#about">關於我們</a>
+      <button class="btn-login open-login">登入</button>
+    </div>
+    <button class="burger" id="burger" aria-label="開啟選單">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- 手機全螢幕選單 -->
+  <div class="mobile-nav" id="mobileNav">
+    <button class="close-x" id="closeNav" aria-label="關閉選單"></button>
+    <a href="#works">作品</a>
+    <a href="#services">服務</a>
+    <a href="#process">製作流程</a>
+    <a href="#about">關於我們</a>
+    <button class="btn-login open-login">登入</button>
+  </div>
+
+  <!-- 主視覺 -->
+  <header class="hero" id="top">
+    <div class="aura"></div>
+
+    <div class="hero-inner">
+      <span class="eyebrow"><span class="dot"></span>AI 動畫製作工作室 · 由想像到成片</span>
+
+      <h1>
+        <span class="line">
+          <span class="word" style="--i:0">把你的</span>
+          <span class="word" style="--i:1">想像，</span>
+        </span>
+        <span class="line">
+          <span class="word grad" style="--i:2">變成會動的</span>
+          <span class="word" style="--i:3">故事</span>
+        </span>
+      </h1>
+
+      <p class="sub">
+        從角色設計、分鏡到最終成片，我們用一條 AI 動畫流程，<br>
+        在幾天內把你腦海裡的點子，變成可以直接播放的影片。
+      </p>
+
+      <div class="cta">
+        <a class="btn btn-primary" href="#contact">免費聊聊你的點子</a>
+        <a class="btn btn-ghost" href="#works">看我們的作品 <span aria-hidden="true">↗</span></a>
+      </div>
+
+      <p class="trust">已完成 <b>30+</b> 支動畫　·　TSMC 廠務寓意　·　兒童繪本　·　品牌短片</p>
+    </div>
+
+    <!-- 左角色（示意，待換成 Seedance 影片） -->
+    <div class="char left">
+      <div class="spotlight"></div>
+      <svg class="char-media" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="bodyA" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="#ffa6cf"/><stop offset="1" stop-color="#ff6fa9"/></linearGradient></defs>
+        <ellipse cx="100" cy="214" rx="46" ry="9" fill="rgba(0,0,0,.25)"/>
+        <rect x="46" y="78" width="108" height="120" rx="46" fill="url(#bodyA)"/>
+        <rect x="46" y="78" width="108" height="120" rx="46" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+        <path d="M52 92 a48 48 0 0 1 96 0 Z" fill="#ffd36e"/>
+        <circle cx="100" cy="62" r="11" fill="#fff7df"/><circle cx="100" cy="62" r="5" fill="#fff"/>
+        <g class="blink" style="transform-origin:100px 120px">
+          <circle cx="82" cy="120" r="11" fill="#fff"/><circle cx="118" cy="120" r="11" fill="#fff"/>
+          <circle cx="84" cy="122" r="5.5" fill="#2a2433"/><circle cx="120" cy="122" r="5.5" fill="#2a2433"/></g>
+        <circle cx="70" cy="140" r="7" fill="rgba(255,120,170,.5)"/><circle cx="130" cy="140" r="7" fill="rgba(255,120,170,.5)"/>
+        <path d="M92 142 q8 8 16 0" stroke="#2a2433" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <rect x="118" y="150" width="44" height="30" rx="5" fill="#2a2433" transform="rotate(-12 140 165)"/>
+        <rect x="118" y="150" width="44" height="9" rx="3" fill="#fff" transform="rotate(-12 140 165)"/>
+      </svg>
+    </div>
+
+    <!-- 右角色（示意，待換成 Seedance 影片） -->
+    <div class="char right">
+      <div class="spotlight"></div>
+      <svg class="char-media" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs><linearGradient id="bodyB" x1="0" y1="0" x2="0" y2="1">
+          <stop stop-color="#9fc2ff"/><stop offset="1" stop-color="#6b8bff"/></linearGradient></defs>
+        <ellipse cx="100" cy="214" rx="46" ry="9" fill="rgba(0,0,0,.25)"/>
+        <rect x="46" y="78" width="108" height="120" rx="46" fill="url(#bodyB)"/>
+        <rect x="46" y="78" width="108" height="120" rx="46" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
+        <ellipse cx="100" cy="72" rx="40" ry="20" fill="#c08bff"/>
+        <circle cx="100" cy="50" r="6" fill="#ffd36e"/><line x1="100" y1="56" x2="100" y2="70" stroke="#c08bff" stroke-width="4"/>
+        <g class="blink" style="transform-origin:100px 120px">
+          <circle cx="82" cy="120" r="11" fill="#fff"/><circle cx="118" cy="120" r="11" fill="#fff"/>
+          <circle cx="84" cy="122" r="5.5" fill="#2a2433"/><circle cx="120" cy="122" r="5.5" fill="#2a2433"/></g>
+        <circle cx="70" cy="140" r="7" fill="rgba(120,150,255,.5)"/><circle cx="130" cy="140" r="7" fill="rgba(120,150,255,.5)"/>
+        <path d="M90 140 q10 10 20 0" stroke="#2a2433" stroke-width="3" fill="none" stroke-linecap="round"/>
+        <line x1="44" y1="150" x2="20" y2="186" stroke="#c08bff" stroke-width="9" stroke-linecap="round"/>
+        <circle cx="18" cy="190" r="9" fill="#ff7eb6"/>
+      </svg>
+    </div>
+  </header>
+
+  <!-- 作品 -->
+  <section class="section" id="works">
+    <div class="sec-head reveal">
+      <div class="tag">作品</div>
+      <h2>我們做過的故事</h2>
+      <p>從廠務寓意到兒童繪本，每一支都是從一句話的點子、從零開始長出來的原創動畫。</p>
+    </div>
+    <div class="works">
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="為廠務維運團隊量身打造的企業寓意動畫：四位守護者各司其職，把抽象的「默默付出」變成看得懂、有溫度的角色故事。">
+        <div class="thumb" style="background:linear-gradient(135deg,#3a7d5d,#7bd6a0)">🌳</div>
+        <div class="meta"><h3>綠管家・廠務守護者</h3><span>企業寓意</span></div></div>
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="家屬日主題短片，以溫馨日常的敘事手法，把員工與家人的情感連結，化成一段柔軟、會讓人微笑的動畫。">
+        <div class="thumb" style="background:linear-gradient(135deg,#7a5db8,#caa6ff)">🏮</div>
+        <div class="meta"><h3>家屬日 × 友人帳</h3><span>溫馨敘事</span></div></div>
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="主打療癒感的循環短片，畫面節奏與聲音設計都為「看了很舒服」而生，適合社群投放與品牌氛圍營造。">
+        <div class="thumb" style="background:linear-gradient(135deg,#b85d8a,#ffb0d0)">🫧</div>
+        <div class="meta"><h3>強迫症舒壓循環片</h3><span>社群短片</span></div></div>
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="兒童用電安全教育繪本動畫，用孩子看得懂的角色與情境，把安全觀念變成記得住的小故事。">
+        <div class="thumb" style="background:linear-gradient(135deg,#c89b3c,#ffe08a)">⚡</div>
+        <div class="meta"><h3>兒童用電安全</h3><span>教育繪本</span></div></div>
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="品牌形象短片，從定位、腳本到成片一條龍，用動畫把品牌個性說清楚，適合官網首頁與提案開場。">
+        <div class="thumb" style="background:linear-gradient(135deg,#3d6bb5,#8fc0ff)">🎬</div>
+        <div class="meta"><h3>品牌形象短片</h3><span>商業委製</span></div></div>
+      <div class="work reveal" tabindex="0" role="button"
+           data-desc="原創角色設計開發：從一句話的描述，發展出可愛、前後一致、可量產的角色三視圖與表情集。">
+        <div class="thumb" style="background:linear-gradient(135deg,#5a5f7a,#b4bcd9)">🎨</div>
+        <div class="meta"><h3>原創角色設計集</h3><span>美術開發</span></div></div>
+    </div>
+  </section>
+
+  <!-- 服務 -->
+  <section class="section" id="services">
+    <div class="sec-head reveal">
+      <div class="tag">服務</div>
+      <h2>我們能幫你做什麼</h2>
+      <p>一條龍把故事做出來，你只要出點子。</p>
+    </div>
+    <div class="services">
+      <div class="svc reveal"><div class="ic">🧸</div><h3>角色設計</h3><p>從一句話描述，生出可愛、前後一致的原創角色。</p></div>
+      <div class="svc reveal"><div class="ic">🎞️</div><h3>分鏡腳本</h3><p>把故事拆成一格一格的畫面與節奏，先看得到雛形。</p></div>
+      <div class="svc reveal"><div class="ic">✨</div><h3>AI 動畫成片</h3><p>用 Seedance / Higgsfield 把分鏡變成會動的影片。</p></div>
+      <div class="svc reveal"><div class="ic">🎵</div><h3>配樂配音</h3><p>中文旁白與量身配樂，一次到位、可直接播放。</p></div>
+    </div>
+  </section>
+
+  <!-- 流程 -->
+  <section class="section" id="process">
+    <div class="sec-head reveal">
+      <div class="tag">製作流程</div>
+      <h2>四步，把點子變成片</h2>
+      <p>過程透明，每一步你都看得到，不滿意當場改。</p>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="num">01</div><h3>聊點子</h3><p>一起把你的想法理清楚，定主題、風格與長度。</p></div>
+      <div class="step reveal"><div class="num">02</div><h3>角色 + 分鏡</h3><p>先做出角色與分鏡雛形，方向對了再往下做。</p></div>
+      <div class="step reveal"><div class="num">03</div><h3>AI 生成 + 微調</h3><p>跑出影片、逐格檢查修到對，動作與一致性顧好。</p></div>
+      <div class="step reveal"><div class="num">04</div><h3>交片 + 上線</h3><p>給你成品檔案，需要的話幫你掛上網、接網域。</p></div>
+    </div>
+  </section>
+
+  <!-- 關於 -->
+  <section class="section" id="about">
+    <div class="about reveal">
+      <div class="tag" style="color:var(--g2);font-weight:700;letter-spacing:.1em">關於我們</div>
+      <h2 style="font-size:clamp(28px,4.4vw,44px);font-weight:900;margin:10px 0 22px">關於 Unrealities 影想</h2>
+      <p>我們是一間用 AI 動畫流程的小工作室，相信好故事不該被製作成本擋在門外。從 TSMC 廠務寓意到兒童繪本，我們把抽象的概念，變成有溫度、會動的角色。</p>
+      <div class="stats">
+        <div class="stat"><b>30+</b><span>支完成動畫</span></div>
+        <div class="stat"><b>4</b><span>大主題類型</span></div>
+        <div class="stat"><b>幾天</b><span>就能交片</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 聯絡我們 -->
+  <section class="section" id="contact">
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <div class="tag">聯絡我們</div>
+        <h2>有點子了嗎？<br>我們把它變成會動的故事。</h2>
+        <p>企業寓意、兒童繪本、品牌短片都歡迎——先聊聊不用錢。留個訊息，我們最快當天回你。</p>
+        <ul class="contact-list">
+          <li>📮 hello@unrealities.studio</li>
+          <li>💬 LINE：@unrealities</li>
+          <li>📍 線上接案，全台與遠端皆可</li>
+        </ul>
+        <p class="hint">（聯絡資訊為示意，之後換成你真正的信箱／LINE 即可）</p>
+      </div>
+      <form class="contact-form reveal" id="contactForm" novalidate>
+        <div class="field"><label for="cName">你的稱呼</label>
+          <input id="cName" type="text" placeholder="王小明" required></div>
+        <div class="field"><label for="cEmail">電子郵件</label>
+          <input id="cEmail" type="email" placeholder="you@example.com" required></div>
+        <div class="field"><label for="cMsg">想做什麼樣的影片？</label>
+          <textarea id="cMsg" rows="4" placeholder="例如：想幫公司做一支 60 秒的品牌介紹動畫…" required></textarea></div>
+        <button type="submit" class="btn btn-primary">送出，免費聊聊</button>
+        <p class="note" id="contactNote"></p>
+      </form>
+    </div>
+  </section>
+
+  <footer>
+    <div class="logo">
+      <svg viewBox="0 0 32 32" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M16 2 L29 9 V23 L16 30 L3 23 V9 Z" stroke="url(#lg)" stroke-width="2" fill="rgba(183,107,255,.10)"/>
+        <path d="M11.5 11 L20.5 16 L11.5 21 Z" fill="url(#lg)"/>
+      </svg>
+      <span>Unrealities <span class="zh">影想</span></span>
+    </div>
+    <div>© 2026 Unrealities 影想 · 由想像到成片</div>
+  </footer>
+
+  <!-- 登入視窗（前端展示用，不會送出任何資料） -->
+  <div class="modal" id="loginModal">
+    <div class="modal-card">
+      <button class="close-x" id="closeModal" aria-label="關閉"></button>
+      <h3>歡迎回來 👋</h3>
+      <p class="lead">登入後查看你的專案進度</p>
+      <form id="loginForm">
+        <div class="field"><label for="email">電子郵件</label>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required></div>
+        <div class="field"><label for="pw">密碼</label>
+          <input type="password" id="pw" placeholder="••••••••" autocomplete="current-password" required></div>
+        <button type="submit" class="btn btn-primary">登入</button>
+        <p class="note" id="loginNote"></p>
+      </form>
+      <p class="alt">還沒有帳號？<a href="#" id="signupLink">立即註冊</a></p>
+    </div>
+  </div>
+
+  <!-- 作品詳情視窗 -->
+  <div class="modal" id="workModal">
+    <div class="modal-card work-modal">
+      <button class="close-x" id="closeWork" aria-label="關閉"></button>
+      <div class="work-modal-thumb" id="workThumb"></div>
+      <span class="work-modal-tag" id="workTag"></span>
+      <h3 id="workTitle"></h3>
+      <p class="work-modal-desc" id="workDesc"></p>
+      <a class="btn btn-primary" id="workCta" style="cursor:pointer">想做類似的？聊聊 →</a>
+    </div>
+  </div>
+
+<script>
+  // 標記 JS 已啟用（讓滑入動畫只在有 JS 時才隱藏內容）
+  document.documentElement.classList.add('js');
+
+  // 手機選單
+  const burger = document.getElementById('burger');
+  const mnav = document.getElementById('mobileNav');
+  const closeNav = document.getElementById('closeNav');
+  burger.addEventListener('click', () => mnav.classList.add('open'));
+  closeNav.addEventListener('click', () => mnav.classList.remove('open'));
+  mnav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mnav.classList.remove('open')));
+
+  // 視窗（modal）通用控制
+  const loginModal = document.getElementById('loginModal');
+  const workModal  = document.getElementById('workModal');
+  const openM  = m => { mnav.classList.remove('open'); m.classList.add('open'); };
+  const closeM = m => m.classList.remove('open');
+  const closeAll = () => document.querySelectorAll('.modal.open').forEach(closeM);
+  document.querySelectorAll('.open-login').forEach(b => b.addEventListener('click', () => openM(loginModal)));
+  document.getElementById('closeModal').addEventListener('click', () => closeM(loginModal));
+  document.getElementById('closeWork').addEventListener('click', () => closeM(workModal));
+  document.querySelectorAll('.modal').forEach(m => m.addEventListener('click', e => { if (e.target === m) closeM(m); }));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeAll(); mnav.classList.remove('open'); } });
+
+  // 登入表單：純展示，不送資料
+  document.getElementById('loginForm').addEventListener('submit', e => {
+    e.preventDefault();
+    document.getElementById('loginNote').textContent = '✅ 這是示意表單（前端展示），尚未接後端。';
+  });
+  document.getElementById('signupLink').addEventListener('click', e => {
+    e.preventDefault();
+    document.getElementById('loginNote').textContent = '註冊功能之後可以再接上。';
+  });
+
+  // 聯絡表單：純展示（不會真的寄出；之後接後端或表單服務即可）
+  document.getElementById('contactForm').addEventListener('submit', e => {
+    e.preventDefault();
+    const note = document.getElementById('contactNote');
+    const ok = ['cName','cEmail','cMsg'].every(id => document.getElementById(id).value.trim());
+    note.textContent = ok
+      ? '✅ 已收到（示意）！真正寄出需要接後端或表單服務，要的話我幫你接。'
+      : '請把三個欄位都填一下喔。';
+    if (ok) e.target.reset();
+  });
+
+  // 作品卡 → 詳情視窗
+  document.querySelectorAll('.work').forEach(card => {
+    const show = () => {
+      const thumb = card.querySelector('.thumb');
+      const wt = document.getElementById('workThumb');
+      wt.textContent = thumb.textContent;
+      wt.style.background = thumb.style.background;
+      document.getElementById('workTag').textContent = card.querySelector('.meta span').textContent;
+      document.getElementById('workTitle').textContent = card.querySelector('.meta h3').textContent;
+      document.getElementById('workDesc').textContent = card.dataset.desc || '';
+      openM(workModal);
+    };
+    card.addEventListener('click', show);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); show(); } });
+  });
+  document.getElementById('workCta').addEventListener('click', () => {
+    closeM(workModal);
+    document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+  });
+
+  // logo 回頂
+  document.querySelector('.logo[data-scroll]').addEventListener('click',
+    () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  // 自動換片：assets/ 裡有對應影片就把示意角色換成真影片（白底自動去背）。
+  // 沒有檔案時保持示意 SVG，不會壞。你只要生圖→丟檔→重整即可。
+  function tryCharVideo(charEl, src){
+    if (!charEl) return;
+    const v = document.createElement('video');
+    v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+    v.setAttribute('muted',''); v.setAttribute('playsinline','');
+    v.className = 'char-media';
+    v.src = src;
+    v.addEventListener('loadeddata', () => {
+      const old = charEl.querySelector('.char-media');
+      if (old) old.remove();
+      charEl.appendChild(v);
+      v.play().catch(()=>{});
+    });
+    // 載入失敗（檔案不存在）就什麼都不做，保留示意 SVG
+  }
+  tryCharVideo(document.querySelector('.char.left'),  'assets/character1.mp4');
+  tryCharVideo(document.querySelector('.char.right'), 'assets/character2.mp4');
+
+  // 區塊滑入動畫（IO 不支援就直接全部顯示，當作安全網）
+  const reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target); } });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach((el, i) => { el.style.transitionDelay = (i % 3) * 0.08 + 's'; io.observe(el); });
+  } else {
+    reveals.forEach(el => el.classList.add('in'));
+  }
+</script>
+</body>
+</html>
