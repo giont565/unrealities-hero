@@ -176,12 +176,10 @@
     filter:blur(14px);
   }
   .char-media{width:100%; display:block; opacity:0; animation:charIn 1s ease 1.1s forwards}
-  /* 真實影片：背景已在影片裡換成站點深色（#0a0a0f），角色像浮在頁面上 —
-     不再加邊框/陰影（那會變成一張卡片），只用柔邊遮罩把矩形邊融進背景 */
+  /* 真實影片：透明背景（webm alpha），角色直接浮在頁面上 —
+     頁面格線與光暈會從角色後方透出，無任何矩形卡片或邊框 */
   .char video.char-media{
-    object-fit:cover; aspect-ratio:4/5;
-    -webkit-mask:radial-gradient(135% 135% at 50% 46%, #000 80%, transparent 100%);
-            mask:radial-gradient(135% 135% at 50% 46%, #000 80%, transparent 100%);
+    object-fit:contain; aspect-ratio:4/5;
   }
 
   @keyframes charIn{to{opacity:1}}
@@ -735,7 +733,7 @@
   document.querySelector('.logo[data-scroll]').addEventListener('click',
     () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-  // 自動換片：assets/ 裡有對應影片就把示意角色換成真影片（白底自動去背）。
+  // 自動換片：assets/ 裡有對應影片就把示意角色換成真影片（透明背景 webm，角色浮空）。
   // 沒有檔案時保持示意 SVG，不會壞。你只要生圖→丟檔→重整即可。
   function tryCharVideo(charEl, src){
     if (!charEl) return;
@@ -752,8 +750,8 @@
     });
     // 載入失敗（檔案不存在）就什麼都不做，保留示意 SVG
   }
-  tryCharVideo(document.querySelector('.char.left'),  'assets/character1.mp4');
-  tryCharVideo(document.querySelector('.char.right'), 'assets/character2.mp4');
+  tryCharVideo(document.querySelector('.char.left'),  'assets/character1.webm');
+  tryCharVideo(document.querySelector('.char.right'), 'assets/character2.webm');
 
   // 區塊滑入動畫（IO 不支援就直接全部顯示，當作安全網）
   const reveals = document.querySelectorAll('.reveal');
