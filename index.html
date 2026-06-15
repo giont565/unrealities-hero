@@ -176,13 +176,12 @@
     filter:blur(14px);
   }
   .char-media{width:100%; display:block; opacity:0; animation:charIn 1s ease 1.1s forwards}
-  /* 真實影片：框成圓角人像卡（白底變成乾淨的卡片，深色背景上很有設計感） */
+  /* 真實影片：背景已在影片裡換成站點深色（#0a0a0f），角色像浮在頁面上 —
+     不再加邊框/陰影（那會變成一張卡片），只用柔邊遮罩把矩形邊融進背景 */
   .char video.char-media{
-    border-radius:22px; object-fit:cover; aspect-ratio:4/5;
-    border:1px solid rgba(255,255,255,.14);
-    box-shadow:0 22px 55px -14px rgba(0,0,0,.7);
-    -webkit-mask:radial-gradient(120% 120% at 50% 42%, #000 72%, transparent 100%);
-            mask:radial-gradient(120% 120% at 50% 42%, #000 72%, transparent 100%);
+    object-fit:cover; aspect-ratio:4/5;
+    -webkit-mask:radial-gradient(135% 135% at 50% 46%, #000 80%, transparent 100%);
+            mask:radial-gradient(135% 135% at 50% 46%, #000 80%, transparent 100%);
   }
 
   @keyframes charIn{to{opacity:1}}
