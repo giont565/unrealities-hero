@@ -169,18 +169,14 @@
   }
   .char.left{left:clamp(10px,4vw,70px); animation:floatA 6s ease-in-out infinite}
   .char.right{right:clamp(10px,4vw,70px); animation:floatB 6.6s ease-in-out infinite}
-  /* 角色身後的柔光（純裝飾，營造氛圍） */
-  .char .spotlight{
-    position:absolute; inset:-18%; z-index:-1; border-radius:50%;
-    background:radial-gradient(closest-side, rgba(183,107,255,.20), rgba(107,155,255,.10) 60%, transparent 78%);
-    filter:blur(14px);
-  }
   .char-media{width:100%; display:block; opacity:0; animation:charIn 1s ease 1.1s forwards}
-  /* 真實影片：透明背景（webm alpha），角色直接浮在頁面上 —
-     頁面格線與光暈會從角色後方透出，無任何矩形卡片或邊框 */
-  .char video.char-media{
-    object-fit:contain; aspect-ratio:4/5;
-  }
+  /* 角色用透明背景影片：黑場景、白場景都直接融入，一套素材通用 */
+  .char video.char-media{ object-fit:contain; aspect-ratio:4/5; }
+  /* 預設只顯示影片；示意 SVG 一律藏起來（避免影片載入前/失敗時跟影片堆疊）。
+     只有影片真的播不出來（缺檔/瀏覽器不支援）時，才由 JS 切回示意 SVG。 */
+  .char .v-fallback{ display:none; }
+  .char.video-failed video.char-media{ display:none; }
+  .char.video-failed .v-fallback{ display:block; }
 
   @keyframes charIn{to{opacity:1}}
   @keyframes floatA{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-14px) rotate(1deg)}}
@@ -342,6 +338,34 @@
   .to-top.show{opacity:1; transform:none; pointer-events:auto}
   .to-top:hover{border-color:rgba(255,255,255,.3); transform:translateY(-2px)}
 
+  /* ---------- 燈泡開關 + 明暗場景切換 ---------- */
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .lamp{
+    width:40px; height:40px; flex:none; display:grid; place-items:center;
+    border:1px solid var(--stroke); background:var(--card); border-radius:50%;
+    cursor:pointer; font-size:18px; line-height:1; transition:.22s; backdrop-filter:blur(6px);
+  }
+  .lamp:hover{ transform:translateY(-1px) rotate(-10deg); border-color:var(--g2); }
+  .lamp .i-light{ display:none; }
+  body.light .lamp .i-dark{ display:none; }
+  body.light .lamp .i-light{ display:inline; }
+
+  /* 淺色（白）場景：背景 ≈ 角色白底色，文字轉深，平滑過場 */
+  body{ transition:background-color .5s ease, color .5s ease; }
+  body.light{
+    --bg:#c8c8cb;
+    --ink:#1b1922;
+    --muted:#56525f;
+    --line:rgba(0,0,0,.07);
+    --card:rgba(0,0,0,.04);
+    --stroke:rgba(0,0,0,.13);
+  }
+  body.light nav{ background:linear-gradient(180deg, rgba(200,200,203,.9), transparent); }
+  body.light .trust{ color:#6b6776; }
+  body.light .trust b{ color:var(--ink); }
+  body.light .btn-login:hover,
+  body.light .btn-ghost:hover{ border-color:rgba(0,0,0,.3); }
+
   /* ---------- 響應式（影片步驟 11） ---------- */
   @media (max-width:880px){
     .works,.services,.steps{grid-template-columns:repeat(2,1fr)}
@@ -385,17 +409,22 @@
       </svg>
       <span>Unrealities <span class="zh">影想</span></span>
     </div>
-    <div class="nav-links">
-      <a href="#works">作品</a>
-      <a href="#services">服務</a>
-      <a href="#process">製作流程</a>
-      <a href="#about">關於我們</a>
-      <a href="#faq">常見問題</a>
-      <button class="btn-login open-login">登入</button>
+    <div class="nav-right">
+      <div class="nav-links">
+        <a href="#works">作品</a>
+        <a href="#services">服務</a>
+        <a href="#process">製作流程</a>
+        <a href="#about">關於我們</a>
+        <a href="#faq">常見問題</a>
+        <button class="btn-login open-login">登入</button>
+      </div>
+      <button class="lamp" id="lamp" aria-label="切換明暗場景" title="開燈 / 關燈">
+        <span class="i-dark">🌙</span><span class="i-light">☀️</span>
+      </button>
+      <button class="burger" id="burger" aria-label="開啟選單">
+        <span></span><span></span><span></span>
+      </button>
     </div>
-    <button class="burger" id="burger" aria-label="開啟選單">
-      <span></span><span></span><span></span>
-    </button>
   </nav>
 
   <!-- 手機全螢幕選單 -->
@@ -440,10 +469,13 @@
       <p class="trust">已完成 <b>30+</b> 支動畫　·　TSMC 廠務寓意　·　兒童繪本　·　品牌短片</p>
     </div>
 
-    <!-- 左角色（示意，待換成 Seedance 影片） -->
+    <!-- 左角色：粉紅（工程帽）— 透明背景影片，黑/白場景通用 -->
     <div class="char left">
-      <div class="spotlight"></div>
-      <svg class="char-media" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <video class="char-media" muted loop autoplay playsinline aria-hidden="true">
+        <source src="assets/character1.mov" type="video/quicktime">
+        <source src="assets/character1.webm" type="video/webm">
+      </video>
+      <svg class="char-media v-fallback" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs><linearGradient id="bodyA" x1="0" y1="0" x2="0" y2="1">
           <stop stop-color="#ffa6cf"/><stop offset="1" stop-color="#ff6fa9"/></linearGradient></defs>
         <ellipse cx="100" cy="214" rx="46" ry="9" fill="rgba(0,0,0,.25)"/>
@@ -461,10 +493,13 @@
       </svg>
     </div>
 
-    <!-- 右角色（示意，待換成 Seedance 影片） -->
+    <!-- 右角色：藍紫（畫筆）— 透明背景影片，黑/白場景通用 -->
     <div class="char right">
-      <div class="spotlight"></div>
-      <svg class="char-media" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <video class="char-media" muted loop autoplay playsinline aria-hidden="true">
+        <source src="assets/character2.mov" type="video/quicktime">
+        <source src="assets/character2.webm" type="video/webm">
+      </video>
+      <svg class="char-media v-fallback" viewBox="0 0 200 230" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs><linearGradient id="bodyB" x1="0" y1="0" x2="0" y2="1">
           <stop stop-color="#9fc2ff"/><stop offset="1" stop-color="#6b8bff"/></linearGradient></defs>
         <ellipse cx="100" cy="214" rx="46" ry="9" fill="rgba(0,0,0,.25)"/>
@@ -733,25 +768,38 @@
   document.querySelector('.logo[data-scroll]').addEventListener('click',
     () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-  // 自動換片：assets/ 裡有對應影片就把示意角色換成真影片（透明背景 webm，角色浮空）。
-  // 沒有檔案時保持示意 SVG，不會壞。你只要生圖→丟檔→重整即可。
-  function tryCharVideo(charEl, src){
-    if (!charEl) return;
-    const v = document.createElement('video');
-    v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
-    v.setAttribute('muted',''); v.setAttribute('playsinline','');
-    v.className = 'char-media';
-    v.src = src;
-    v.addEventListener('loadeddata', () => {
-      const old = charEl.querySelector('.char-media');
-      if (old) old.remove();
-      charEl.appendChild(v);
-      v.play().catch(()=>{});
+  // ---------- 燈泡開關：明暗場景切換 ----------
+  // 黑場景 = 深色背景；白場景 = 淺色背景。角色是透明背景影片，兩個場景共用同一套。
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  function setTheme(light){
+    document.body.classList.toggle('light', light);
+    try { localStorage.setItem('unr-theme', light ? 'light' : 'dark'); } catch(e){}
+    if (themeMeta) themeMeta.setAttribute('content', light ? '#c8c8cb' : '#0a0a0f');
+    // 確保當前場景顯示中的角色影片在播放
+    document.querySelectorAll('.char video.char-media').forEach(v => {
+      if (v.offsetParent !== null) v.play().catch(()=>{});
     });
-    // 載入失敗（檔案不存在）就什麼都不做，保留示意 SVG
   }
-  tryCharVideo(document.querySelector('.char.left'),  'assets/character1.webm');
-  tryCharVideo(document.querySelector('.char.right'), 'assets/character2.webm');
+  document.querySelectorAll('.lamp').forEach(b =>
+    b.addEventListener('click', () => setTheme(!document.body.classList.contains('light')))
+  );
+  // 影片真的播不出來（缺檔/離線/瀏覽器全不支援）→ 該角色切回示意 SVG（不堆疊、不會壞）。
+  // 注意：用 <source> 子元素時，載入失敗的 error 事件是觸發在最後一個 <source> 上、
+  // 不是 <video> 本身，所以兩者都要聽；再加一道延遲保險，確保 fallback 一定會生效。
+  document.querySelectorAll('.char video.char-media').forEach(v => {
+    const fail = () => v.closest('.char').classList.add('video-failed');
+    const srcs = v.querySelectorAll('source');
+    if (srcs.length) srcs[srcs.length - 1].addEventListener('error', fail);
+    v.addEventListener('error', fail);
+    // 若 error 在綁定前就已觸發完（極快的 cached 404 / 全來源不支援）→ 同步補判一次
+    if (v.networkState === 3 /* HTMLMediaElement.NETWORK_NO_SOURCE */) fail();
+    // 保險：8 秒後仍完全沒載到任何資料 → 視為失敗，退回示意 SVG（慢網路至少有 metadata，不會誤判）
+    setTimeout(() => { if (v.readyState < 1) fail(); }, 8000);
+  });
+  // 記住上次選的場景（預設黑場景）
+  let savedTheme = 'dark';
+  try { savedTheme = localStorage.getItem('unr-theme') || 'dark'; } catch(e){}
+  setTheme(savedTheme === 'light');
 
   // 區塊滑入動畫（IO 不支援就直接全部顯示，當作安全網）
   const reveals = document.querySelectorAll('.reveal');
