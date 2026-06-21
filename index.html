@@ -542,7 +542,7 @@
     <div class="works">
       <div class="work reveal" tabindex="0" role="button"
            data-desc="為廠務維運團隊量身打造的企業寓意動畫：四位守護者各司其職，把抽象的「默默付出」變成看得懂、有溫度的角色故事。">
-        <div class="thumb" style="background:linear-gradient(135deg,#3a7d5d,#7bd6a0)">🌳</div>
+        <div class="thumb" style="background-image:url(assets/work-pusd.jpg);background-size:cover;background-position:center"></div>
         <div class="meta"><h3>綠管家・廠務守護者</h3><span>企業寓意</span></div></div>
       <div class="work reveal" tabindex="0" role="button"
            data-desc="家屬日主題短片，以溫馨日常的敘事手法，把員工與家人的情感連結，化成一段柔軟、會讓人微笑的動畫。">
@@ -550,7 +550,7 @@
         <div class="meta"><h3>家屬日 × 友人帳</h3><span>溫馨敘事</span></div></div>
       <div class="work reveal" tabindex="0" role="button"
            data-desc="主打療癒感的循環短片，畫面節奏與聲音設計都為「看了很舒服」而生，適合社群投放與品牌氛圍營造。">
-        <div class="thumb" style="background:linear-gradient(135deg,#b85d8a,#ffb0d0)">🫧</div>
+        <div class="thumb" style="background-image:url(assets/work-oddly.jpg);background-size:cover;background-position:center"></div>
         <div class="meta"><h3>強迫症舒壓循環片</h3><span>社群短片</span></div></div>
       <div class="work reveal" tabindex="0" role="button"
            data-desc="兒童用電安全教育繪本動畫，用孩子看得懂的角色與情境，把安全觀念變成記得住的小故事。">
@@ -562,7 +562,7 @@
         <div class="meta"><h3>品牌形象短片</h3><span>商業委製</span></div></div>
       <div class="work reveal" tabindex="0" role="button"
            data-desc="原創角色設計開發：從一句話的描述，發展出可愛、前後一致、可量產的角色三視圖與表情集。">
-        <div class="thumb" style="background:linear-gradient(135deg,#5a5f7a,#b4bcd9)">🎨</div>
+        <div class="thumb" style="background-image:url(assets/work-charsheet.jpg);background-size:cover;background-position:center"></div>
         <div class="meta"><h3>原創角色設計集</h3><span>美術開發</span></div></div>
     </div>
   </section>
@@ -650,13 +650,15 @@
         <h2>有點子了嗎？<br>我們把它變成會動的故事。</h2>
         <p>企業寓意、兒童繪本、品牌短片都歡迎——先聊聊不用錢。留個訊息，我們最快當天回你。</p>
         <ul class="contact-list">
-          <li>📮 hello@unrealities.studio</li>
-          <li>💬 LINE：@unrealities</li>
+          <li>📝 填右邊表單，訊息直接進我們信箱</li>
+          <li>⚡ 最快當天回覆你</li>
           <li>📍 線上接案，全台與遠端皆可</li>
         </ul>
-        <p class="hint">（聯絡資訊為示意，之後換成你真正的信箱／LINE 即可）</p>
       </div>
       <form class="contact-form reveal" id="contactForm" novalidate>
+        <!-- 蜜罐：真人看不到也不會填，自動填的多半是垃圾機器人 → 直接擋掉 -->
+        <input type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"
+               style="position:absolute; left:-9999px; width:0; height:0; opacity:0">
         <div class="field"><label for="cName">你的稱呼</label>
           <input id="cName" type="text" placeholder="王小明" required></div>
         <div class="field"><label for="cEmail">電子郵件</label>
@@ -747,15 +749,39 @@
     document.getElementById('loginNote').textContent = '註冊功能之後可以再接上。';
   });
 
-  // 聯絡表單：純展示（不會真的寄出；之後接後端或表單服務即可）
-  document.getElementById('contactForm').addEventListener('submit', e => {
+  // 聯絡表單：透過 FormSubmit 直接寄到信箱（用代碼別名，原始碼不暴露 email）
+  document.getElementById('contactForm').addEventListener('submit', async e => {
     e.preventDefault();
+    const form = e.target;
     const note = document.getElementById('contactNote');
-    const ok = ['cName','cEmail','cMsg'].every(id => document.getElementById(id).value.trim());
-    note.textContent = ok
-      ? '✅ 已收到（示意）！真正寄出需要接後端或表單服務，要的話我幫你接。'
-      : '請把三個欄位都填一下喔。';
-    if (ok) e.target.reset();
+    const btn  = form.querySelector('button[type="submit"]');
+    const name = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const msg  = document.getElementById('cMsg').value.trim();
+    if (!name || !email || !msg){ note.textContent = '請把三個欄位都填一下喔。'; return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ note.textContent = 'email 格式好像不太對，再確認一下？'; return; }
+    if (form.querySelector('[name="_honey"]').value) return;   // 蜜罐有值 = 機器人，靜默擋掉
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '送出中…'; note.textContent = '';
+    try {
+      const res = await fetch('https://formsubmit.co/ajax/840f5bba5e22d4352e83bee417596b79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          稱呼: name, email: email, 想做的影片: msg,
+          _subject: '【影想接案】網站有新訊息 🎬', _template: 'table', _captcha: 'false'
+        })
+      });
+      const data = await res.json();
+      if (data.success === 'true' || data.success === true){
+        note.textContent = '✅ 已送出！我們會盡快回信給你 🎬';
+        form.reset();
+      } else { throw new Error(data.message || 'failed'); }
+    } catch (err){
+      note.textContent = '😢 一時送不出去，請稍後再試一次。';
+    } finally {
+      btn.disabled = false; btn.textContent = orig;
+    }
   });
 
   // 作品卡 → 詳情視窗
@@ -763,8 +789,12 @@
     const show = () => {
       const thumb = card.querySelector('.thumb');
       const wt = document.getElementById('workThumb');
-      wt.textContent = thumb.textContent;
-      wt.style.background = thumb.style.background;
+      const cs = getComputedStyle(thumb);
+      wt.textContent = thumb.textContent;               // emoji 作品有字、真實縮圖為空
+      wt.style.backgroundImage = cs.backgroundImage;    // url(縮圖) 或 漸層，computed 都在這
+      wt.style.backgroundColor = cs.backgroundColor;
+      wt.style.backgroundSize = 'cover';
+      wt.style.backgroundPosition = 'center';
       document.getElementById('workTag').textContent = card.querySelector('.meta span').textContent;
       document.getElementById('workTitle').textContent = card.querySelector('.meta h3').textContent;
       document.getElementById('workDesc').textContent = card.dataset.desc || '';
